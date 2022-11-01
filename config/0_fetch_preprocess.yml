@@ -1,0 +1,27 @@
+# pass the following cli using a yml (equalivant to kedro run --env base --pipeline fetch_preprocess --params ...)
+run:
+  env: base                   # conf/base
+  pipeline: fetch_preprocess  # run which pipeline in pipeline_registry
+  params:                     # additional params apart from parameters.yml
+    dataset:
+      dir: data/01_raw
+      df_sales: sales_train_evaluation.csv
+      df_calendar: calendar.csv
+      df_prices: sell_prices.csv
+
+    trimming:
+      test_size: 28
+      lag: [28]               # due to TEST_SIZE = 28, LAG at least 28
+      ma: [7, 28]             # 180, 360
+      start_date: "2016"
+
+    features:
+      ma_lag_feature: [
+        ['id'], 
+        ['item_id'], 
+        ['cat_id'], 
+        ['store_id'], 
+        ['dept_id','store_id'], 
+        ['cat_id','state_id'], 
+        []          # global lv
+      ]

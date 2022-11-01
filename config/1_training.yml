@@ -1,0 +1,37 @@
+# pass the following cli using a yml (equalivant to kedro run --env base --pipeline fetch_preprocess --params ...)
+run:
+  env: base                   # conf/base
+  pipeline: training          # run which pipeline in pipeline_registry
+  params:                     # additional params apart from parameters.yml
+    features:
+      num_cols:
+        ma_lag: True            # True: include all ma & lag num features
+        num_col_1: ["sell_price"]
+      cat_cols:
+        cat_col_1: ['item_id', 'dept_id','store_id', 'cat_id', 'state_id']
+        cat_col_2: ['weekday','is_holiday','is_weekend']
+    
+    train_valid_test_split:
+      train_d: "1-1914"
+      valid_d: "1914-1942"
+      test_d: "1942-9999"
+    
+    lgbm:
+      lgbm_params: {
+        "objective" : "tweedie",
+        "tweedie_variance_power": 1.25,
+        "alpha" : 0.9,
+        "metric" : ["rmse"],
+        "force_row_wise" : True,
+        "learning_rate" : 0.07,
+        "bagging_freq" : 3,
+        "bagging_fraction" : 0.5,
+        "lambda_l2" : 0.1,
+        "num_leaves" : 256,
+        "min_data_in_leaf": 128,
+      }
+      lgbm_trainer_args: {
+        "num_boost_round": 1000,
+        "early_stopping_rounds": 100,
+        "verbose_eval": 50
+      }

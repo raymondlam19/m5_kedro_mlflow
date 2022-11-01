@@ -1,0 +1,51 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // Kedro tasks
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install",
+            "type": "shell",
+            "command": "C:/Users/LAMRA2/AppData/Roaming/Python/Python38/Scripts/kedro.exe",
+            "args": [
+                "install"
+            ]
+        },
+        {
+            "label": "Test",
+            "group": "test",
+            "type": "shell",
+            "command": "C:/Users/LAMRA2/AppData/Roaming/Python/Python38/Scripts/kedro.exe",
+            "args": [
+                "test"
+            ]
+        },
+        {
+            "label": "Kedro run --config",
+            "group": {
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "C:/Users/LAMRA2/AppData/Roaming/Python/Python38/Scripts/kedro.exe",
+            "args": [
+                "run",
+                "--config=config/1_training.yml" //0_fetch_preprocess    1_training
+            ]
+        },
+        {
+            "label": "Package",
+            "group": {
+                "kind": "build",
+            },
+            "type": "shell",
+            "command": "C:/Users/LAMRA2/AppData/Roaming/Python/Python38/Scripts/kedro.exe",
+            "args": [
+                "package"
+            ],
+            // Will run `Test` before packaging
+            "dependsOn": [
+                "Test"
+            ]
+        }
+    ]
+}

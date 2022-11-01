@@ -42,12 +42,35 @@
 # This is a data set used by the "Hello World" example pipeline provided with the project
 # template. Please feel free to remove it once you remove the example pipeline.
 
-example_iris_data:
-  type: pandas.CSVDataSet
-  filepath: data/01_raw/iris.csv
+# intermediate_df:
+#   type: pandas.CSVDataSet
+#   filepath: data/02_intermediate/intermediate_df.csv
 
-example_model:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
-  data_set:
-    type: pickle.PickleDataSetkedro 
-    filepath: data/06_models/trained_model.pkl
+preprocessed_df:
+  type: pickle.PickleDataSet
+  filepath: data/03_primary/preprocessed_df.pkl
+
+lgbm_train_set:
+  type: pickle.PickleDataSet
+  filepath: data/05_model_input/lgbm_train_set.pkl
+
+lgbm_valid_set:
+  type: pickle.PickleDataSet
+  filepath: data/05_model_input/lgbm_valid_set.pkl
+
+lgbm_test_set:
+  type: pickle.PickleDataSet
+  filepath: data/05_model_input/lgbm_test_set.pkl
+
+label_encoding_mapping_dict:
+  type: pickle.PickleDataSet
+  filepath: data/03_primary/label_encoding_mapping_dict.pkl
+
+lgbm_trained_model:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/lgbm_trained_model.pkl
+  backend: pickle
+
+df_out:
+  type: pickle.PickleDataSet
+  filepath: data/07_model_output/df_out.pkl
