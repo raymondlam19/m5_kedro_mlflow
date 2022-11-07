@@ -15,7 +15,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         A mapping from pipeline names to ``Pipeline`` objects.
     """
     de_fetch_preprocess_pipeline = de.create_fetch_preprocess_pipeline()
-    ds_lgbm_model_training_pipeline = ds.create_lgbm_model_training_pipeline("evaluate")
+    ds_lgbm_model_training_pipeline = ds.create_lgbm_model_training_pipeline("whole")
     # ds_inference_pipeline = ds.create_inference_pipeline()
 
     pipelines = {

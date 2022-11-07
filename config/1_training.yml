@@ -1,6 +1,6 @@
 # pass the following cli using a yml (equalivant to kedro run --env base --pipeline fetch_preprocess --params ...)
 run:
-  env: base                   # conf/base
+  env: base                   # use .yml in conf/base
   pipeline: training          # run which pipeline in pipeline_registry
   params:                     # additional params apart from parameters.yml
     features:

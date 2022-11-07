@@ -11,6 +11,7 @@ import pandas as pd
 import lightgbm as lgbm
 
 from m5_kedro_mlflow.pipelines.data_science.metrics import wmape
+from m5_kedro_mlflow.pipelines.logger import Logger
 
 
 def ingest_data(df, params_base, params_features, params_train_valid_test_split):
@@ -105,7 +106,7 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
     return train_set, valid_set, test_set, labels
 
 
-def lgbm_training_plot_feature_importance(train_set, valid_set, params_lgbm):
+def lgbm_training(train_set, valid_set, params_lgbm):
     LGBM_PARAMS = params_lgbm["lgbm_params"]
     LGBM_TRAINER_ARGS = params_lgbm["lgbm_trainer_args"]
 
@@ -116,11 +117,17 @@ def lgbm_training_plot_feature_importance(train_set, valid_set, params_lgbm):
         valid_sets=valid_set,
     )
 
-    # log
-    lgbm.plot_importance(lgbm_model, importance_type="gain")
-    lgbm.plot_importance(lgbm_model, importance_type="split")
-
     return lgbm_model
+
+
+def plot_lgbm_feature_importance(lgbm_model):
+    # log
+    ax_gain = lgbm.plot_importance(lgbm_model, importance_type="gain")
+    ax_gain.figure.tight_layout()
+    ax_split = lgbm.plot_importance(lgbm_model, importance_type="split")
+    ax_split.figure.tight_layout()
+
+    return ax_gain.figure, ax_split.figure
 
 
 def prediction(lgbm_model, label_encoding_mapping_dict, *datasets):
@@ -148,9 +155,13 @@ def prediction(lgbm_model, label_encoding_mapping_dict, *datasets):
 
 def evaluation(df_out):
     # log
-    print(
-        f"Train wmape: {wmape(df_out.loc[df_out.train_valid_test=='TRAIN', 'y_pred'], df_out.loc[df_out.train_valid_test=='TRAIN', 'y'])*100:.2f}%"
+    train_wmape = wmape(
+        df_out.loc[df_out.train_valid_test == "TRAIN", "y_pred"],
+        df_out.loc[df_out.train_valid_test == "TRAIN", "y"],
     )
-    print(
-        f"Valid wmape: {wmape(df_out.loc[df_out.train_valid_test=='VALID', 'y_pred'], df_out.loc[df_out.train_valid_test=='VALID', 'y'])*100:.2f}%"
+    valid_wmape = wmape(
+        df_out.loc[df_out.train_valid_test == "VALID", "y_pred"],
+        df_out.loc[df_out.train_valid_test == "VALID", "y"],
     )
+    Logger.log_metric("train_wmape", train_wmape)
+    Logger.log_metric("valid_wmape", valid_wmape)

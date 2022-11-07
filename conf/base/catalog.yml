@@ -67,9 +67,23 @@ label_encoding_mapping_dict:
   filepath: data/03_primary/label_encoding_mapping_dict.pkl
 
 lgbm_trained_model:
-  type: pickle.PickleDataSet
-  filepath: data/06_models/lgbm_trained_model.pkl
-  backend: pickle
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: kedro_mlflow.io.models.MlflowModelSaverDataSet
+    flavor: mlflow.lightgbm
+    filepath: data/06_models/lgbm_trained_model
+
+plot_feature_importance_gain:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: matplotlib.MatplotlibWriter
+    filepath: data/08_reporting/plot_feature_importance_gain.png
+
+plot_feature_importance_split:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: matplotlib.MatplotlibWriter
+    filepath: data/08_reporting/plot_feature_importance_split.png
 
 df_out:
   type: pickle.PickleDataSet
