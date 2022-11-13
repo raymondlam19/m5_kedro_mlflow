@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgbm
 
-from m5_kedro_mlflow.pipelines.data_science.metrics import wmape
+from m5_kedro_mlflow.pipelines.data_science.metrics import mape
+from m5_kedro_mlflow.pipelines.data_science.dataset import Dataset
 from m5_kedro_mlflow.pipelines.logger import Logger
 
 
@@ -50,71 +51,28 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
     ] = "VALID"
     df.loc[df.d >= int(TEST_D.split("-")[0]), "train_valid_test"] = "TEST"
 
-    X_train = df.loc[
-        df.train_valid_test == "TRAIN",
-        [col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-    ]
-    X_valid = df.loc[
-        df.train_valid_test == "VALID",
-        [col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-    ]
-    X_test = df.loc[
-        df.train_valid_test == "TEST", [col + "_encoded" for col in CAT_COLS] + NUM_COLS
-    ]
-
-    y_train = df.loc[df.train_valid_test == "TRAIN", TARGET_COL]
-    y_valid = df.loc[df.train_valid_test == "VALID", TARGET_COL]
-    y_test = df.loc[df.train_valid_test == "TEST", TARGET_COL]
-
-    # log
-    print(
-        "Train: ",
-        X_train.shape,
-        y_train.shape,
-        "\nValid: ",
-        X_valid.shape,
-        y_valid.shape,
-        "\nTest: ",
-        X_test.shape,
-        y_test.shape,
+    dataset_train = Dataset(
+        df[df.train_valid_test == "TRAIN"], CAT_COLS, NUM_COLS, TARGET_COL
+    )
+    dataset_valid = Dataset(
+        df[df.train_valid_test == "VALID"], CAT_COLS, NUM_COLS, TARGET_COL
+    )
+    dataset_test = Dataset(
+        df[df.train_valid_test == "TEST"], CAT_COLS, NUM_COLS, TARGET_COL
     )
 
-    train_set = lgbm.Dataset(
-        X_train,
-        y_train,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "TRAIN"},
-    )
-
-    valid_set = lgbm.Dataset(
-        X_valid,
-        y_valid,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "VALID"},
-    )
-
-    test_set = lgbm.Dataset(
-        X_test,
-        y_test,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "TEST"},
-    )
-
-    return train_set, valid_set, test_set, labels
+    return dataset_train, dataset_valid, dataset_test, labels
 
 
-def lgbm_training(train_set, valid_set, params_lgbm):
+def lgbm_training(dataset_train, dataset_valid, params_lgbm):
     LGBM_PARAMS = params_lgbm["lgbm_params"]
     LGBM_TRAINER_ARGS = params_lgbm["lgbm_trainer_args"]
 
     lgbm_model = lgbm.train(
         LGBM_PARAMS,
         **LGBM_TRAINER_ARGS,
-        train_set=train_set,
-        valid_sets=valid_set,
+        train_set=dataset_train.create_lgbm_dataset(),
+        valid_sets=dataset_valid.create_lgbm_dataset(),
     )
 
     return lgbm_model
@@ -130,36 +88,31 @@ def plot_lgbm_feature_importance(lgbm_model):
     return ax_gain.figure, ax_split.figure
 
 
-def prediction(lgbm_model, label_encoding_mapping_dict, *datasets):
+def prediction(lgbm_model, *datasets):
+    cat_encoded_cols = datasets[0].cat_encoded_cols
+    num_cols = datasets[0].num_cols
+    target_col = datasets[0].target_col
 
-    df_out = pd.DataFrame()
-    for dataset in datasets:
-        df = dataset.data.copy()
+    df_out = pd.concat([dataset.df for dataset in datasets], axis=0)
 
-        # label decoding
-        for i, k in label_encoding_mapping_dict.items():
-            df[i] = df[i + "_encoded"].replace(k)
+    df_out["y_pred"] = lgbm_model.predict(df_out[cat_encoded_cols + num_cols]).clip(
+        min=0
+    )
 
-        df = df[[col for col in df.columns if "_encoded" not in col]].copy()
-
-        # add train_valid_test col
-        for i, k in dataset.params.items():
-            df[i] = k
-
-        df["y"] = dataset.label
-        df["y_pred"] = lgbm_model.predict(dataset.data).clip(min=0)
-        df_out = pd.concat([df_out, df], axis=0)
+    df_out = df_out[[col for col in df_out.columns if "_encoded" not in col]].rename(
+        columns={target_col: "y"}
+    )
 
     return df_out
 
 
 def evaluation(df_out):
     # log
-    train_wmape = wmape(
+    train_wmape = mape(
         df_out.loc[df_out.train_valid_test == "TRAIN", "y_pred"],
         df_out.loc[df_out.train_valid_test == "TRAIN", "y"],
     )
-    valid_wmape = wmape(
+    valid_wmape = mape(
         df_out.loc[df_out.train_valid_test == "VALID", "y_pred"],
         df_out.loc[df_out.train_valid_test == "VALID", "y"],
     )

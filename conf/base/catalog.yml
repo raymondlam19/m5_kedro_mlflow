@@ -50,17 +50,17 @@ preprocessed_df:
   type: pickle.PickleDataSet
   filepath: data/03_primary/preprocessed_df.pkl
 
-lgbm_train_set:
+dataset_train:
   type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_train_set.pkl
+  filepath: data/05_model_input/dataset_train.pkl
 
-lgbm_valid_set:
+dataset_valid:
   type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_valid_set.pkl
+  filepath: data/05_model_input/dataset_valid.pkl
 
-lgbm_test_set:
+dataset_test:
   type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_test_set.pkl
+  filepath: data/05_model_input/dataset_test.pkl
 
 label_encoding_mapping_dict:
   type: pickle.PickleDataSet
@@ -86,5 +86,5 @@ plot_feature_importance_split:
     filepath: data/08_reporting/plot_feature_importance_split.png
 
 df_out:
-  type: pickle.PickleDataSet
-  filepath: data/07_model_output/df_out.pkl
+  type: pandas.CSVDataSet
+  filepath: data/07_model_output/df_out.csv

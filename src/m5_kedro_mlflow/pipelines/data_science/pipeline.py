@@ -19,9 +19,9 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
             "params:train_valid_test_split",
         ],
         outputs=[
-            "lgbm_train_set",
-            "lgbm_valid_set",
-            "lgbm_test_set",
+            "dataset_train",
+            "dataset_valid",
+            "dataset_test",
             "label_encoding_mapping_dict",
         ],
         name="ingest_data",
@@ -30,8 +30,8 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
     node_train = node(
         func=lgbm_training,
         inputs=[
-            "lgbm_train_set",
-            "lgbm_valid_set",
+            "dataset_train",
+            "dataset_valid",
             "params:lgbm",
         ],
         outputs="lgbm_trained_model",
@@ -49,10 +49,9 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
         func=prediction,
         inputs=[
             "lgbm_trained_model",
-            "label_encoding_mapping_dict",
-            "lgbm_train_set",
-            "lgbm_valid_set",
-            "lgbm_test_set",
+            "dataset_train",
+            "dataset_valid",
+            "dataset_test",
         ],
         outputs="df_out",
         name="prediction",
