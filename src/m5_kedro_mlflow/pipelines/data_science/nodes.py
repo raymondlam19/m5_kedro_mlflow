@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgbm
 
-from m5_kedro_mlflow.pipelines.data_science.metrics import mape
+from m5_kedro_mlflow.pipelines.data_science.metrics import smape
 from m5_kedro_mlflow.pipelines.data_science.dataset import Dataset
 from m5_kedro_mlflow.pipelines.logger import Logger
 
@@ -108,13 +108,13 @@ def prediction(lgbm_model, *datasets):
 
 def evaluation(df_out):
     # log
-    train_wmape = mape(
+    train_smape = smape(
         df_out.loc[df_out.train_valid_test == "TRAIN", "y_pred"],
         df_out.loc[df_out.train_valid_test == "TRAIN", "y"],
     )
-    valid_wmape = mape(
+    valid_smape = smape(
         df_out.loc[df_out.train_valid_test == "VALID", "y_pred"],
         df_out.loc[df_out.train_valid_test == "VALID", "y"],
     )
-    Logger.log_metric("train_wmape", train_wmape)
-    Logger.log_metric("valid_wmape", valid_wmape)
+    Logger.log_metric("train_smape", train_smape)
+    Logger.log_metric("valid_smape", valid_smape)

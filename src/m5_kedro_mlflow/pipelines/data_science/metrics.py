@@ -1,5 +1,5 @@
 import numpy as np
 
 
-def mape(y_pred, y):
-    return np.sum(np.abs(y_pred - y)) / np.sum(y)
+def smape(y_pred, y):
+    return np.mean(np.abs(y_pred - y) / (np.abs(y) + np.abs(y_pred)))
