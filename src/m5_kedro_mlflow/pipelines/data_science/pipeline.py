@@ -49,6 +49,7 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
         func=prediction,
         inputs=[
             "lgbm_trained_model",
+            "params:prediction",
             "dataset_train",
             "dataset_valid",
             "dataset_test",

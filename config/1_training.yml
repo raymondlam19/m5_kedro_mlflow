@@ -6,6 +6,7 @@ run:
     features:
       num_cols:
         ma_lag: True            # True: include all ma & lag num features
+        sum: True
         num_col_1: ["sell_price"]
       cat_cols:
         cat_col_1: ['item_id', 'dept_id','store_id', 'cat_id', 'state_id']
@@ -35,3 +36,6 @@ run:
         "early_stopping_rounds": 100,
         "verbose_eval": 50
       }
+    
+    prediction:
+      round: True

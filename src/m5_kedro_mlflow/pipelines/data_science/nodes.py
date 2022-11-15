@@ -25,7 +25,10 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
             NUM_COLS += k
 
     if params_features["num_cols"]["ma_lag"]:
-        NUM_COLS += [col for col in df.columns if TARGET_COL + "_" in col]
+        NUM_COLS += [col for col in df.columns if f"{TARGET_COL}_" in col]
+
+    if params_features["num_cols"]["sum"]:
+        NUM_COLS += [col for col in df.columns if f"sum_{TARGET_COL}" in col]
 
     for i, k in params_features["cat_cols"].items():
         if "cat_col_" in i:
@@ -88,7 +91,8 @@ def plot_lgbm_feature_importance(lgbm_model):
     return ax_gain.figure, ax_split.figure
 
 
-def prediction(lgbm_model, *datasets):
+def prediction(lgbm_model, params_prediction, *datasets):
+    ROUND = params_prediction["round"]
     cat_encoded_cols = datasets[0].cat_encoded_cols
     num_cols = datasets[0].num_cols
     target_col = datasets[0].target_col
@@ -98,7 +102,10 @@ def prediction(lgbm_model, *datasets):
     df_out["y_pred"] = lgbm_model.predict(df_out[cat_encoded_cols + num_cols]).clip(
         min=0
     )
+    if ROUND:
+        df_out["y_pred"] = np.round(df_out["y_pred"])
 
+    # remove label_encoded cols
     df_out = df_out[[col for col in df_out.columns if "_encoded" not in col]].rename(
         columns={target_col: "y"}
     )

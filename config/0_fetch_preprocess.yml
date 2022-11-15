@@ -25,3 +25,6 @@ run:
         ['cat_id','state_id'], 
         []          # global lv
       ]
+      sum: [
+        ['id'],
+      ]

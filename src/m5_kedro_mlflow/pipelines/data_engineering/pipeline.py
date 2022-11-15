@@ -31,7 +31,7 @@ def create_fetch_preprocess_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=create_lag_ma_features_and_trim_again,
-                inputs=["intermediate_df", "params:trimming", "params:features"],
+                inputs=["intermediate_df", "params:trimming", "params:features", "params:base"],
                 outputs="preprocessed_df",
                 name="create_lag_ma_features",
             ),
