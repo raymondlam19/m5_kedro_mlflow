@@ -50,17 +50,13 @@ preprocessed_df:
   type: pickle.PickleDataSet
   filepath: data/03_primary/preprocessed_df.pkl
 
-dataset_train:
+dataset_all:
   type: pickle.PickleDataSet
-  filepath: data/05_model_input/dataset_train.pkl
+  filepath: data/05_model_input/dataset_all.pkl
 
-dataset_valid:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/dataset_valid.pkl
-
-dataset_test:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/dataset_test.pkl
+df_left:
+  type: pandas.CSVDataSet
+  filepath: data/07_model_output/df_left.csv
 
 label_encoding_mapping_dict:
   type: pickle.PickleDataSet
@@ -85,6 +81,6 @@ plot_feature_importance_split:
     type: matplotlib.MatplotlibWriter
     filepath: data/08_reporting/plot_feature_importance_split.png
 
-df_out:
+y_pred:
   type: pandas.CSVDataSet
-  filepath: data/07_model_output/df_out.csv
+  filepath: data/07_model_output/y_pred.csv

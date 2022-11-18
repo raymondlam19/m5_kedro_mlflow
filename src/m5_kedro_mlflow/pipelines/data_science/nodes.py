@@ -54,28 +54,24 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
     ] = "VALID"
     df.loc[df.d >= int(TEST_D.split("-")[0]), "train_valid_test"] = "TEST"
 
-    dataset_train = Dataset(
-        df[df.train_valid_test == "TRAIN"], CAT_COLS, NUM_COLS, TARGET_COL
-    )
-    dataset_valid = Dataset(
-        df[df.train_valid_test == "VALID"], CAT_COLS, NUM_COLS, TARGET_COL
-    )
-    dataset_test = Dataset(
-        df[df.train_valid_test == "TEST"], CAT_COLS, NUM_COLS, TARGET_COL
-    )
+    dataset_all = Dataset(df, CAT_COLS, NUM_COLS, TARGET_COL)
 
-    return dataset_train, dataset_valid, dataset_test, labels
+    df_left = dataset_all.df[
+        [col for col in dataset_all.df.columns if "_encoded" not in col]
+    ].rename(columns={TARGET_COL: "y"})
+
+    return dataset_all, df_left, labels
 
 
-def lgbm_training(dataset_train, dataset_valid, params_lgbm):
+def lgbm_training(dataset_all, params_lgbm):
     LGBM_PARAMS = params_lgbm["lgbm_params"]
     LGBM_TRAINER_ARGS = params_lgbm["lgbm_trainer_args"]
 
     lgbm_model = lgbm.train(
         LGBM_PARAMS,
         **LGBM_TRAINER_ARGS,
-        train_set=dataset_train.create_lgbm_dataset(),
-        valid_sets=dataset_valid.create_lgbm_dataset(),
+        train_set=dataset_all.create_lgbm_dataset("TRAIN"),
+        valid_sets=dataset_all.create_lgbm_dataset("VALID"),
     )
 
     return lgbm_model
@@ -91,29 +87,21 @@ def plot_lgbm_feature_importance(lgbm_model):
     return ax_gain.figure, ax_split.figure
 
 
-def prediction(lgbm_model, params_prediction, *datasets):
+def prediction(lgbm_model, params_prediction, dataset_all):
     ROUND = params_prediction["round"]
-    cat_encoded_cols = datasets[0].cat_encoded_cols
-    num_cols = datasets[0].num_cols
-    target_col = datasets[0].target_col
 
-    df_out = pd.concat([dataset.df for dataset in datasets], axis=0)
-
-    df_out["y_pred"] = lgbm_model.predict(df_out[cat_encoded_cols + num_cols]).clip(
-        min=0
-    )
+    y_pred = lgbm_model.predict(dataset_all.create_lgbm_dataset("ALL").data)
+    y_pred = np.clip(y_pred, a_min=0, a_max=None)
     if ROUND:
-        df_out["y_pred"] = np.round(df_out["y_pred"])
+        y_pred = np.round(y_pred)
 
-    # remove label_encoded cols
-    df_out = df_out[[col for col in df_out.columns if "_encoded" not in col]].rename(
-        columns={target_col: "y"}
-    )
-
-    return df_out
+    y_pred = pd.Series(y_pred, name="y_pred")
+    return y_pred
 
 
-def evaluation(df_out):
+def evaluation(df_left, y_pred):
+    df_out = pd.concat([df_left, y_pred], axis=1)
+
     # log
     train_smape = smape(
         df_out.loc[df_out.train_valid_test == "TRAIN", "y_pred"],
