@@ -9,7 +9,7 @@ run:
         sum: True
         num_col_1: ["sell_price"]
       cat_cols:
-        cat_col_1: ['item_id', 'dept_id','store_id', 'cat_id', 'state_id']
+        cat_col_1: ['dept_id','store_id', 'cat_id', 'state_id']
         cat_col_2: ['weekday','is_holiday','is_weekend']
     
     train_valid_test_split:
