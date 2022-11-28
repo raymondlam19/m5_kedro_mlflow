@@ -50,13 +50,14 @@ preprocessed_df:
   type: pickle.PickleDataSet
   filepath: data/03_primary/preprocessed_df.pkl
 
-dataset_all:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/dataset_all.pkl
+# uncomment the following 2 datasets when there are any changes in preprocess pipeline
+# dataset_all:
+#   type: pickle.PickleDataSet
+#   filepath: data/05_model_input/dataset_all.pkl
 
-df_left:
-  type: pandas.CSVDataSet
-  filepath: data/07_model_output/df_left.csv
+# df_left:
+#   type: pandas.CSVDataSet
+#   filepath: data/07_model_output/df_left.csv
 
 label_encoding_mapping_dict:
   type: pickle.PickleDataSet

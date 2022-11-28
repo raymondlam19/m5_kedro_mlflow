@@ -6,7 +6,7 @@ run:
     features:
       num_cols:
         ma_lag: True            # True: include all ma & lag num features
-        sum: True
+        avg: True
         num_col_1: ["sell_price"]
       cat_cols:
         cat_col_1: ['dept_id','store_id', 'cat_id', 'state_id']
