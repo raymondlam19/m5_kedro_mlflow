@@ -25,10 +25,10 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
             NUM_COLS += k
 
     if params_features["num_cols"]["ma_lag"]:
-        NUM_COLS += [col for col in df.columns if f"{TARGET_COL}_" in col]
+        NUM_COLS += [col for col in df.columns if f"{TARGET_COL}_" in col and f"avg_{TARGET_COL}_per_" not in col]
 
-    if params_features["num_cols"]["sum"]:
-        NUM_COLS += [col for col in df.columns if f"sum_{TARGET_COL}" in col]
+    if params_features["num_cols"]["avg"]:
+        NUM_COLS += [col for col in df.columns if f"avg_{TARGET_COL}_per_" in col]
 
     for i, k in params_features["cat_cols"].items():
         if "cat_col_" in i:

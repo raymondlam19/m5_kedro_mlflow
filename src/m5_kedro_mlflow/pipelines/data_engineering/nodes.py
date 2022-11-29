@@ -111,7 +111,7 @@ def create_lag_ma_features_and_trim_again(
     MA = params_trimming["ma"]
     START_DATE = params_trimming["start_date"]
     MA_LAG_FEATURE = params_features["ma_lag_feature"]
-    SUM = params_features["sum"]
+    AVG = params_features["avg"]
     TARGET_COL = params_base["target_col"]
 
     for key in MA_LAG_FEATURE:
@@ -123,10 +123,10 @@ def create_lag_ma_features_and_trim_again(
     # trimming on sell price
     df = df[df.sell_price.notnull()].reset_index(drop=True)
 
-    # sum(sold) over "id" across all dates within scope
-    for key in SUM:
-        df[f"sum_{TARGET_COL}"] = (
-            df[key + [TARGET_COL]].groupby(key)[TARGET_COL].transform(np.sum)
+    # avg(sold) over "id" across all dates within scope
+    for key in AVG:
+        df[f"avg_{TARGET_COL}_per_"+"_".join(key)] = (
+            df[key + [TARGET_COL]].groupby(key)[TARGET_COL].transform(np.mean)
         )
 
     df = df.sort_values(["id", "date"]).reset_index(drop=True)
