@@ -12,7 +12,7 @@
             "module": "kedro",
             "args": [
                 "run",
-                "--config=config/1_training.yml" //0_fetch_preprocess    1_training
+                "--config=config/1b_training_trend.yml" //0_fetch_preprocess    1a_training_sold
             ]
             // Any other arguments should be passed as a comma-seperated-list
             // e.g "args": ["run", "--pipeline", "pipeline_name"]

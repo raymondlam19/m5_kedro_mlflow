@@ -1,0 +1,18 @@
+features:
+  num_cols:
+    num_col_1: ["sell_price", "sell_price_diff", "avg_sold_per_id"]
+    num_col_2: ['sold_lag1']
+    num_col_3: [
+      'id_sold_lag1_ma7', 'id_sold_lag1_ma7_diff', 
+      'id_sold_lag1_ma28', 'id_sold_lag1_ma28_diff',
+      'global_sold_lag1_ma7', 'global_sold_lag1_ma7_diff', 
+      'global_sold_lag1_ma28', 'global_sold_lag1_ma28_diff'
+    ]
+  cat_cols:
+    cat_col_1: ['dept_id','store_id', 'cat_id', 'state_id']
+    cat_col_2: ['weekday','is_holiday','is_weekend']
+
+train_valid_test_split:
+  train_d: "1-1914"
+  valid_d: "1914-1942"
+  test_d: "1942-9999"

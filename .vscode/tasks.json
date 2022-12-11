@@ -12,7 +12,7 @@
             "command": "C:/Anaconda3/envs/forecast/Scripts/kedro.exe",
             "args": [
                 "run",
-                "--config=config/1_training.yml" //0_fetch_preprocess    1_training
+                "--config=config/1b_training_trend.yml" //0_fetch_preprocess    1a_training_sold
             ]
         }
     ]

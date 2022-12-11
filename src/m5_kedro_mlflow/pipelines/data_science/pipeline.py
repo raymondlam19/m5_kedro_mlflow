@@ -10,11 +10,21 @@ from .nodes import *
 
 def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
 
+    node_get_target = node(
+        func=get_target,
+        inputs=[
+            "preprocessed_df",
+            "params:target",
+        ],
+        outputs="df1",
+        name="get_target",
+    )
+
     node_ingest = node(
         func=ingest_data,
         inputs=[
-            "preprocessed_df",
-            "params:base",
+            "df1",
+            "params:target",
             "params:features",
             "params:train_valid_test_split",
         ],
@@ -50,17 +60,33 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
             "params:prediction",
             "dataset_all",
         ],
-        outputs="y_pred",
+        outputs="df_y_pred",
         name="prediction",
     )
 
+    # TODO3
+    # node_postprocess = node(
+    #     func=postprocess,
+    #     inputs=[
+    #         "lgbm_trained_model",
+    #         "params:prediction",
+    #         "dataset_all",
+    #     ],
+    #     outputs="y_pred",
+    #     name="prediction",
+    # )
+
     node_evaluate = node(
-        func=evaluation, inputs=["df_left", "y_pred"], outputs=None, name="evaluation"
+        func=evaluation,
+        inputs=["df_left", "df_y_pred"],
+        outputs=None,
+        name="evaluation",
     )
 
     assert mode.lower() in ("whole", "train", "plot_importance", "predict", "evaluate")
     if mode.lower() == "whole":
         nodes = [
+            node_get_target,
             node_ingest,
             node_train,
             node_plot_importance,
@@ -68,7 +94,7 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
             node_evaluate,
         ]
     elif mode.lower() == "train":
-        nodes = [node_ingest, node_train, node_plot_importance]
+        nodes = [node_get_target, node_ingest, node_train, node_plot_importance]
     elif mode.lower() == "plot_importance":
         nodes = [node_plot_importance]
     elif mode.lower() == "predict":

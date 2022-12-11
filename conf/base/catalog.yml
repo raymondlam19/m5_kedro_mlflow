@@ -82,6 +82,6 @@ plot_feature_importance_split:
     type: matplotlib.MatplotlibWriter
     filepath: data/08_reporting/plot_feature_importance_split.png
 
-y_pred:
+df_y_pred:
   type: pandas.CSVDataSet
-  filepath: data/07_model_output/y_pred.csv
+  filepath: data/07_model_output/df_y_pred.csv
