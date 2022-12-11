@@ -7,10 +7,11 @@ import logging
 from typing import Any, Dict, Tuple
 
 import os
+import re
 import numpy as np
 import pandas as pd
 
-from m5_kedro_mlflow.pipelines.data_engineering.utils import create_lag_ma
+from m5_kedro_mlflow.pipelines.data_engineering.utils import create_ma_and_ma_diff
 
 
 def read_data(params_dataset):
@@ -35,13 +36,11 @@ def read_data(params_dataset):
 
 
 def trim_and_preprocess_data(
-    df_sales, df_calendar, df_prices, params_base, params_trimming
+    df_sales, df_calendar, df_prices, params_trimming, params_features
 ):
-    TARGET_COL = params_base["target_col"]
-    KEY_COLS = params_base["key_cols"]
     TEST_SIZE = params_trimming["test_size"]
-    LAG = params_trimming["lag"]
-    MA = params_trimming["ma"]
+    MA_WIN = params_features["ma_win"]
+    LAG_RANGE = params_features["lag_range"]
     START_DATE = params_trimming["start_date"]
 
     # Add null sales for the remaining days 1942-1969
@@ -56,7 +55,9 @@ def trim_and_preprocess_data(
         df_sales[col] = np.nan
 
     # trim
-    start_date = pd.to_datetime(START_DATE) - pd.Timedelta(max(LAG) + max(MA), "days")
+    start_date = pd.to_datetime(START_DATE) - pd.Timedelta(
+        max(max(LAG_RANGE), 1 + max(MA_WIN)), "days"
+    )
     df_calendar_trim = df_calendar[(df_calendar.date >= start_date)].copy()
 
     # For trimming
@@ -77,9 +78,14 @@ def trim_and_preprocess_data(
         ["date", "wm_yr_wk", "weekday", "d", "is_holiday", "is_weekend"]
     ]
 
+    # preprocess on price
+    df_prices["sell_price_diff"] = df_prices.groupby(["store_id", "item_id"])[
+        "sell_price"
+    ].transform(lambda x: x.diff(1).div(x))
+
     # trim on sales
     df_sales_trim = df_sales[
-        [col for col in KEY_COLS if col != "date"]
+        ["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"]
         + [f"d_{n}" for n in range(d_min, d_max + 1)]
     ]
 
@@ -93,7 +99,7 @@ def trim_and_preprocess_data(
         df_sales_trim,
         id_vars=["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"],
         var_name="d",
-        value_name=TARGET_COL,
+        value_name="sold",
     )
     df = pd.merge(df, df_calendar_trim, how="left", on="d")
     df = pd.merge(
@@ -104,18 +110,25 @@ def trim_and_preprocess_data(
     return df
 
 
-def create_lag_ma_features_and_trim_again(
-    df, params_trimming, params_features, params_base
-):
-    LAG = params_trimming["lag"]
-    MA = params_trimming["ma"]
-    START_DATE = params_trimming["start_date"]
-    MA_LAG_FEATURE = params_features["ma_lag_feature"]
-    AVG = params_features["avg"]
-    TARGET_COL = params_base["target_col"]
+def create_ma_lag_features(df, params_features):
+    MA_WIN = params_features["ma_win"]
+    MA_KEY = params_features["ma_key"]
+    LAG_RANGE = params_features["lag_range"]
 
-    for key in MA_LAG_FEATURE:
-        df = create_lag_ma(df, LAG, MA, key)
+    # create ma features
+    for key in MA_KEY:
+        df = create_ma_and_ma_diff(df, MA_WIN, key, lag=0)
+        df = create_ma_and_ma_diff(df, MA_WIN, key, lag=1)
+
+    # create lag features
+    for i in range(LAG_RANGE[0], LAG_RANGE[1] + 1):
+        df[f"sold_lag{i}"] = df.groupby(["id"])["sold"].shift(i)
+
+    return df
+
+
+def final_trimming(df, params_trimming):
+    START_DATE = params_trimming["start_date"]
 
     # trimming on start & end date (due to lag & ma)
     df = df[(df.date >= START_DATE)].copy()
@@ -123,12 +136,21 @@ def create_lag_ma_features_and_trim_again(
     # trimming on sell price
     df = df[df.sell_price.notnull()].reset_index(drop=True)
 
+    df = df.sort_values(["id", "date"]).reset_index(drop=True)
+    return df
+
+
+def final_create_other_features(df, params_features):
+    AVG = params_features["avg"]
+
     # avg(sold) over "id" across all dates within scope
     for key in AVG:
-        df[f"avg_{TARGET_COL}_per_"+"_".join(key)] = (
-            df[key + [TARGET_COL]].groupby(key)[TARGET_COL].transform(np.mean)
+        df[f"avg_sold_per_" + "_".join(key)] = (
+            df[key + ["sold"]].groupby(key)["sold"].transform(np.mean)
         )
 
-    df = df.sort_values(["id", "date"]).reset_index(drop=True)
+    # for sold_ma_diff.div(df['avg_sold_per_id'])
+    for col in [col for col in df.columns if re.search("ma\d_diff", col)]:
+        df[col] = df[col].div(df["avg_sold_per_id"])
 
     return df

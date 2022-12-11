@@ -11,20 +11,15 @@ run:
 
     trimming:
       test_size: 28
-      lag: [28]               # due to TEST_SIZE = 28, LAG at least 28
-      ma: [7, 28]             # 180, 360
       start_date: "2016"
 
     features:
-      ma_lag_feature: [
-        ['id'], 
-        ['item_id'], 
-        ['cat_id'], 
-        ['store_id'], 
-        ['dept_id','store_id'], 
-        ['cat_id','state_id'], 
+      ma_win: [7, 28]
+      ma_key: [
+        ['id'],     # id lv
         []          # global lv
       ]
+      lag_range: [1, 1]
       avg: [
         ['id'],
       ]
