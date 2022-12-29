@@ -42,9 +42,9 @@
 # This is a data set used by the "Hello World" example pipeline provided with the project
 # template. Please feel free to remove it once you remove the example pipeline.
 
-# intermediate_df:
+# df_calendar_trim:
 #   type: pandas.CSVDataSet
-#   filepath: data/02_intermediate/intermediate_df.csv
+#   filepath: data/03_primary/df_calendar_trim.csv
 
 preprocessed_df:
   type: pickle.PickleDataSet

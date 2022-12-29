@@ -74,14 +74,6 @@ def trim_and_preprocess_data(
     df_calendar_trim["is_weekend"] = df_calendar_trim.weekday.isin(
         ["Saturday", "Sunday"]
     )
-    df_calendar_trim = df_calendar_trim[
-        ["date", "wm_yr_wk", "weekday", "d", "is_holiday", "is_weekend"]
-    ]
-
-    # preprocess on price
-    df_prices["sell_price_diff"] = df_prices.groupby(["store_id", "item_id"])[
-        "sell_price"
-    ].transform(lambda x: x.diff(1).div(x))
 
     # trim on sales
     df_sales_trim = df_sales[
@@ -94,6 +86,11 @@ def trim_and_preprocess_data(
         (df_prices.wm_yr_wk >= week_min) & (df_prices.wm_yr_wk <= week_max)
     ]
 
+    # preprocess on price
+    df_prices_trim["sell_price_diff"] = df_prices_trim.groupby(["store_id", "item_id"])[
+        "sell_price"
+    ].transform(lambda x: (x - x.iloc[0]) / x.iloc[0])
+
     # merge 3 df into 1
     df = pd.melt(
         df_sales_trim,
@@ -101,7 +98,24 @@ def trim_and_preprocess_data(
         var_name="d",
         value_name="sold",
     )
-    df = pd.merge(df, df_calendar_trim, how="left", on="d")
+    df = pd.merge(
+        df,
+        df_calendar_trim[
+            [
+                "date",
+                "wm_yr_wk",
+                "weekday",
+                "d",
+                "is_holiday",
+                "is_weekend",
+                "snap_CA",
+                "snap_TX",
+                "snap_WI",
+            ]
+        ],
+        how="left",
+        on="d",
+    )
     df = pd.merge(
         df, df_prices_trim, how="left", on=["store_id", "item_id", "wm_yr_wk"]
     )

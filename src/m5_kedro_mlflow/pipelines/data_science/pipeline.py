@@ -8,7 +8,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import *
 
 
-def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
+def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
 
     node_get_target = node(
         func=get_target,
@@ -63,18 +63,6 @@ def create_lgbm_model_training_pipeline(mode="whole", **kwargs) -> Pipeline:
         outputs="df_y_pred",
         name="prediction",
     )
-
-    # TODO3
-    # node_postprocess = node(
-    #     func=postprocess,
-    #     inputs=[
-    #         "lgbm_trained_model",
-    #         "params:prediction",
-    #         "dataset_all",
-    #     ],
-    #     outputs="y_pred",
-    #     name="prediction",
-    # )
 
     node_evaluate = node(
         func=evaluation,
