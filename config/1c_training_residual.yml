@@ -3,7 +3,7 @@ run:
   env: train                  # use .yml in conf/train
   pipeline: training          # run which pipeline in pipeline_registry
   params:                     # additional params apart from parameters.yml 
-    target: 'residual_id_sold_lag1_ma7'   # ['residual_id_sold_lag1_ma7', 'residual_id_sold_lag1_ma28', 'residual_id_sold_lag0_ma7', 'residual_id_sold_lag0_ma28']
+    target: 'residual'
     features:
       num_cols:
         num_col_1: ["sell_price", "sell_price_diff", "avg_sold_per_id"]

@@ -22,13 +22,11 @@ def get_target(df, params_target):
     if (
         TARGET != "sold"
         and not re.search("id_sold_lag0_ma\d", TARGET)
-        and not re.search("residual_id_sold_lag\d_ma\d", TARGET)
+        and TARGET != "residual"
     ):
-        raise ValueError(
-            "target must be 'sold' or 'id_sold_lag\d_ma\d' or 'residual_id_sold_lag\d_ma\d'"
-        )
-    elif "residual" in TARGET:
-        df[TARGET] = df["sold"] - df[TARGET.split("residual_")[1]]
+        raise ValueError("target must be 'sold' or 'id_sold_lag0_ma\d' or 'residual'")
+    elif TARGET == "residual":
+        df["residual"] = df["sold"] - df["y_pred"]
     else:
         pass
     return df
