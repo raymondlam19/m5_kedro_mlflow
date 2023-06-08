@@ -2,42 +2,42 @@
 # (transcoding), templating and a way to reuse arguments that are frequently repeated. See more here:
 # https://kedro.readthedocs.io/en/stable/data/data_catalog.html
 
-preprocessed_df:
+PREPROCESSED_DF:
   type: pickle.PickleDataSet
   filepath: data/03_primary/preprocessed_df.pkl
 
 # uncomment the following 2 datasets when there are any changes in preprocess pipeline
-# dataset_all:
+# DATASET_ALL:
 #   type: pickle.PickleDataSet
 #   filepath: data/05_model_input/dataset_all.pkl
 
-# df_left:
+# DF_LEFT:
 #   type: pandas.CSVDataSet
 #   filepath: data/07_model_output/df_left.csv
 
-label_encoding_mapping_dict:
+LABEL_ENCODING_MAPPING_DICT:
   type: pickle.PickleDataSet
   filepath: data/03_primary/label_encoding_mapping_dict.pkl
 
-lgbm_trained_model:
+LGBM_TRAINED_MODEL:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
   data_set:
     type: kedro_mlflow.io.models.MlflowModelSaverDataSet
     flavor: mlflow.lightgbm
     filepath: data/06_models/lgbm_trained_model
 
-plot_feature_importance_gain:
+PLOT_FEATURE_IMPORTANCE_GAIN:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
   data_set:
     type: matplotlib.MatplotlibWriter
     filepath: data/08_reporting/plot_feature_importance_gain.png
 
-plot_feature_importance_split:
+PLOT_FEATURE_IMPORTANCE_SPLIT:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
   data_set:
     type: matplotlib.MatplotlibWriter
     filepath: data/08_reporting/plot_feature_importance_split.png
 
-df_y_pred:
+DF_Y_PRED:
   type: pandas.CSVDataSet
   filepath: data/07_model_output/df_y_pred.csv

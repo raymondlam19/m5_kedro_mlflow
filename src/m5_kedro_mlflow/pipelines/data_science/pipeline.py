@@ -13,15 +13,15 @@ def create_lgbm_training_pipeline(mode="whole") -> Pipeline:
     node_ingest = node(
         func=ingest_data,
         inputs=[
-            "preprocessed_df",
+            "PREPROCESSED_DF",
             "params:target",
             "params:features",
             "params:train_valid_test_split",
         ],
         outputs=[
-            "dataset_all",
-            "df_left",
-            "label_encoding_mapping_dict",
+            "DATASET_ALL",
+            "DF_LEFT",
+            "LABEL_ENCODING_MAPPING_DICT",
         ],
     )
 
@@ -31,13 +31,13 @@ def create_lgbm_training_pipeline(mode="whole") -> Pipeline:
             "dataset_all",
             "params:lgbm",
         ],
-        outputs="lgbm_trained_model",
+        outputs="LGBM_TRAINED_MODEL",
     )
 
     node_plot_importance = node(
         func=plot_lgbm_feature_importance,
         inputs="lgbm_trained_model",
-        outputs=["plot_feature_importance_gain", "plot_feature_importance_split"],
+        outputs=["PLOT_FEATURE_IMPORTANCE_GAIN", "PLOT_FEATURE_IMPORTANCE_SPLIT"],
     )
 
     node_predict = node(
@@ -47,12 +47,12 @@ def create_lgbm_training_pipeline(mode="whole") -> Pipeline:
             "params:prediction",
             "dataset_all",
         ],
-        outputs="df_y_pred",
+        outputs="DF_Y_PRED",
     )
 
     node_evaluate = node(
         func=evaluation,
-        inputs=["df_left", "df_y_pred"],
+        inputs=["DF_LEFT", "DF_Y_PRED"],
         outputs=None,
     )
 

@@ -25,22 +25,22 @@ def create_preprocess_pipeline(**kwargs) -> Pipeline:
                     "params:trimming",
                     "params:features",
                 ],
-                outputs="pre_df1",
+                outputs="de_df1",
             ),
             node(
                 func=create_ma_lag_features,
-                inputs=["df1", "params:features"],
-                outputs="df2",
+                inputs=["de_df1", "params:features"],
+                outputs="de_df2",
             ),
             node(
                 func=final_trimming,
-                inputs=["df2", "params:trimming"],
-                outputs="df3",
+                inputs=["de_df2", "params:trimming"],
+                outputs="de_df3",
             ),
             node(
                 func=final_create_other_features,
-                inputs=["df3", "params:features"],
-                outputs="preprocessed_df",
+                inputs=["de_df3", "params:features"],
+                outputs="PREPROCESSED_DF",
             ),
         ]
     )
