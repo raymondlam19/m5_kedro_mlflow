@@ -15,7 +15,7 @@
             },
             "args": [
                 "run",
-                "--config=config/1b_training_trend.yml" //0_fetch_preprocess    1a_training_sold
+                "--config=run/1_training.yml" //0_preprocess    1_training
             ],
             "justMyCode": false,
             "console": "integratedTerminal"
