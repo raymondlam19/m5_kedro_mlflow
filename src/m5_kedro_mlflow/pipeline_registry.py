@@ -14,15 +14,13 @@ def register_pipelines() -> Dict[str, Pipeline]:
     Returns:
         A mapping from pipeline names to ``Pipeline`` objects.
     """
-    de_fetch_preprocess_pipeline = de.create_fetch_preprocess_pipeline()
-    ds_lgbm_model_training_pipeline = ds.create_lgbm_model_training_pipeline("whole")
-    # ds_inference_pipeline = ds.create_inference_pipeline()
+    de_preprocess_pipeline = de.create_preprocess_pipeline()
+    ds_lgbm_training_pipeline = ds.create_lgbm_training_pipeline("whole")
 
     pipelines = {
-        "fetch_preprocess": de_fetch_preprocess_pipeline,
-        "training": ds_lgbm_model_training_pipeline,
-        # "ds_inference": de_pipeline + ds_inference_pipeline,
-        "__default__": ds_lgbm_model_training_pipeline,
+        "preprocess": de_preprocess_pipeline,
+        "lgbm_training": ds_lgbm_training_pipeline,
+        # "all": de_preprocess_pipeline + ds_lgbm_training_pipeline,
     }
 
     return pipelines

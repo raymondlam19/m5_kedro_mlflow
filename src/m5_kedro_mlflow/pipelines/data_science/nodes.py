@@ -16,22 +16,6 @@ from m5_kedro_mlflow.pipelines.data_science.dataset import Dataset
 from m5_kedro_mlflow.pipelines.logger import Logger
 
 
-def get_target(df, params_target):
-    TARGET = params_target
-
-    if (
-        TARGET != "sold"
-        and not re.search("id_sold_lag0_ma\d", TARGET)
-        and TARGET != "residual"
-    ):
-        raise ValueError("target must be 'sold' or 'id_sold_lag0_ma\d' or 'residual'")
-    elif TARGET == "residual":
-        df["residual"] = df["sold"] - df["y_pred"]
-    else:
-        pass
-    return df
-
-
 def ingest_data(df, params_target, params_features, params_train_valid_test_split):
     # numerical and catergorical columns
     TARGET = params_target

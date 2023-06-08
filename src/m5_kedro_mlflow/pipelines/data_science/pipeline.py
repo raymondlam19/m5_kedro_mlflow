@@ -8,22 +8,12 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import *
 
 
-def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
-
-    node_get_target = node(
-        func=get_target,
-        inputs=[
-            "preprocessed_df",
-            "params:target",
-        ],
-        outputs="df1",
-        name="get_target",
-    )
+def create_lgbm_training_pipeline(mode="whole") -> Pipeline:
 
     node_ingest = node(
         func=ingest_data,
         inputs=[
-            "df1",
+            "preprocessed_df",
             "params:target",
             "params:features",
             "params:train_valid_test_split",
@@ -33,7 +23,6 @@ def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
             "df_left",
             "label_encoding_mapping_dict",
         ],
-        name="ingest_data",
     )
 
     node_train = node(
@@ -43,14 +32,12 @@ def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
             "params:lgbm",
         ],
         outputs="lgbm_trained_model",
-        name="lgbm_training",
     )
 
     node_plot_importance = node(
         func=plot_lgbm_feature_importance,
         inputs="lgbm_trained_model",
         outputs=["plot_feature_importance_gain", "plot_feature_importance_split"],
-        name="plot_lgbm_feature_importance",
     )
 
     node_predict = node(
@@ -61,20 +48,17 @@ def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
             "dataset_all",
         ],
         outputs="df_y_pred",
-        name="prediction",
     )
 
     node_evaluate = node(
         func=evaluation,
         inputs=["df_left", "df_y_pred"],
         outputs=None,
-        name="evaluation",
     )
 
     assert mode.lower() in ("whole", "train", "plot_importance", "predict", "evaluate")
     if mode.lower() == "whole":
         nodes = [
-            node_get_target,
             node_ingest,
             node_train,
             node_plot_importance,
@@ -82,7 +66,7 @@ def create_lgbm_model_training_pipeline(mode="whole") -> Pipeline:
             node_evaluate,
         ]
     elif mode.lower() == "train":
-        nodes = [node_get_target, node_ingest, node_train, node_plot_importance]
+        nodes = [node_ingest, node_train, node_plot_importance]
     elif mode.lower() == "plot_importance":
         nodes = [node_plot_importance]
     elif mode.lower() == "predict":
