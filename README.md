@@ -30,7 +30,7 @@ pip install -r src/requirements.txt
 You can run your Kedro project with:
 
 ```
-kedro run
+kedro run --config=run/1_training_sold.yml
 ```
 
 ## How to test your Kedro project
