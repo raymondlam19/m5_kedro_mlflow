@@ -30,7 +30,15 @@ pip install -r src/requirements.txt
 You can run your Kedro project with:
 
 ```
-kedro run
+kedro run --config=run/1_training_sold.yml
+```
+
+## How to open mlflow ui to view exp result
+
+
+```
+kedro mlflow ui
+http://localhost:5000/
 ```
 
 ## How to test your Kedro project

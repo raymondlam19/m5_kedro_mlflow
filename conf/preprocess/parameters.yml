@@ -1,0 +1,21 @@
+dataset:
+  dir: data/01_raw
+  df_sales: sales_train_evaluation.csv
+  df_calendar: calendar.csv
+  df_prices: sell_prices.csv
+
+trimming:
+  test_size: 28
+  start_date: "2016"
+
+features:
+  ma_win: [7, 28]
+  ma_key: [
+    ['id'],     # id lv
+    []          # global lv
+  ]
+  lag_range: [1, 1]   # create lag features in this range
+  avg: [
+    ['id'],
+    # u may create more global avg features in a list here
+  ]

@@ -1,0 +1,44 @@
+target: 'sold'
+features:
+  num_cols:
+    num_col_1: ["sell_price", "sell_price_diff", "avg_sold_per_id"]
+    num_col_2: ['sold_lag1']
+    num_col_3: [
+      'id_sold_lag1_ma7', 'id_sold_lag1_ma7_diff', 
+      'id_sold_lag1_ma28', 'id_sold_lag1_ma28_diff',
+      'global_sold_lag1_ma7', 'global_sold_lag1_ma7_diff', 
+      'global_sold_lag1_ma28', 'global_sold_lag1_ma28_diff'
+    ]
+    # num_col_4: []   # feel free to add more features in a list
+  cat_cols:
+    cat_col_1: ['dept_id','store_id', 'cat_id', 'state_id']
+    cat_col_2: ['weekday','is_holiday','is_weekend']
+    # cat_col_3: []   # feel free to add more features in a list
+
+train_valid_test_split:
+  train_d: "1-1914"     # day 1 to 1913 (20110129 - 20160424)
+  valid_d: "1914-1942"  # day 1914 to 1941 (20160425 - 20160522)
+  test_d: "1942-9999"   # day 1942 to 1969 (20160523 - 20160619)
+
+lgbm:
+  lgbm_params: {
+    "objective" : "tweedie",
+    "tweedie_variance_power": 1.25,
+    "alpha" : 0.9,
+    "metric" : ["rmse"],
+    "force_row_wise" : True,
+    "learning_rate" : 0.07,
+    "bagging_freq" : 3,
+    "bagging_fraction" : 0.5,
+    "lambda_l2" : 0.1,
+    "num_leaves" : 256,
+    "min_data_in_leaf": 128,
+  }
+  lgbm_trainer_args: {
+    "num_boost_round": 1000,
+    "early_stopping_rounds": 100,
+    "verbose_eval": 50
+  }
+
+prediction:
+  round_decimal: 0

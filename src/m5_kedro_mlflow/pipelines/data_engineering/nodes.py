@@ -7,20 +7,14 @@ import logging
 from typing import Any, Dict, Tuple
 
 import os
+import re
 import numpy as np
 import pandas as pd
 
-from m5_kedro_mlflow.pipelines.data_engineering.utils import create_lag_ma
+from m5_kedro_mlflow.pipelines.data_engineering.utils import create_ma_and_ma_diff
 
 
 def read_data(params_dataset):
-    """Read 3 raw data csv -> trim and preprocess -> merge 3 df into 1
-        params_dataset, params_trimming, params_features
-    Args:
-        parameters: Parameters defined in parameters.yml.
-    Returns:
-        df: trimed & merged dataframe
-    """
     DIR = params_dataset["dir"]
     DF_SALES_FILENAME = params_dataset["df_sales"]
     DF_CALENDAR_FILENAME = params_dataset["df_calendar"]
@@ -35,13 +29,13 @@ def read_data(params_dataset):
 
 
 def trim_and_preprocess_data(
-    df_sales, df_calendar, df_prices, params_base, params_trimming
+    df_sales, df_calendar, df_prices, params_trimming, params_features
 ):
-    TARGET_COL = params_base["target_col"]
-    KEY_COLS = params_base["key_cols"]
+    """Read 3 df -> first trim and preprocess -> merge 3 df into 1"""
+
     TEST_SIZE = params_trimming["test_size"]
-    LAG = params_trimming["lag"]
-    MA = params_trimming["ma"]
+    MA_WIN = params_features["ma_win"]
+    LAG_RANGE = params_features["lag_range"]
     START_DATE = params_trimming["start_date"]
 
     # Add null sales for the remaining days 1942-1969
@@ -56,7 +50,9 @@ def trim_and_preprocess_data(
         df_sales[col] = np.nan
 
     # trim
-    start_date = pd.to_datetime(START_DATE) - pd.Timedelta(max(LAG) + max(MA), "days")
+    start_date = pd.to_datetime(START_DATE) - pd.Timedelta(
+        max(max(LAG_RANGE), 1 + max(MA_WIN)), "days"
+    )
     df_calendar_trim = df_calendar[(df_calendar.date >= start_date)].copy()
 
     # For trimming
@@ -73,13 +69,10 @@ def trim_and_preprocess_data(
     df_calendar_trim["is_weekend"] = df_calendar_trim.weekday.isin(
         ["Saturday", "Sunday"]
     )
-    df_calendar_trim = df_calendar_trim[
-        ["date", "wm_yr_wk", "weekday", "d", "is_holiday", "is_weekend"]
-    ]
 
     # trim on sales
     df_sales_trim = df_sales[
-        [col for col in KEY_COLS if col != "date"]
+        ["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"]
         + [f"d_{n}" for n in range(d_min, d_max + 1)]
     ]
 
@@ -88,14 +81,36 @@ def trim_and_preprocess_data(
         (df_prices.wm_yr_wk >= week_min) & (df_prices.wm_yr_wk <= week_max)
     ]
 
+    # preprocess on price
+    df_prices_trim["sell_price_diff"] = df_prices_trim.groupby(["store_id", "item_id"])[
+        "sell_price"
+    ].transform(lambda x: (x - x.iloc[0]) / x.iloc[0])
+
     # merge 3 df into 1
     df = pd.melt(
         df_sales_trim,
         id_vars=["id", "item_id", "dept_id", "cat_id", "store_id", "state_id"],
         var_name="d",
-        value_name=TARGET_COL,
+        value_name="sold",
     )
-    df = pd.merge(df, df_calendar_trim, how="left", on="d")
+    df = pd.merge(
+        df,
+        df_calendar_trim[
+            [
+                "date",
+                "wm_yr_wk",
+                "weekday",
+                "d",
+                "is_holiday",
+                "is_weekend",
+                "snap_CA",
+                "snap_TX",
+                "snap_WI",
+            ]
+        ],
+        how="left",
+        on="d",
+    )
     df = pd.merge(
         df, df_prices_trim, how="left", on=["store_id", "item_id", "wm_yr_wk"]
     )
@@ -104,20 +119,51 @@ def trim_and_preprocess_data(
     return df
 
 
-def create_lag_ma_features_and_trim_again(df, params_trimming, params_features):
-    LAG = params_trimming["lag"]
-    MA = params_trimming["ma"]
-    START_DATE = params_trimming["start_date"]
-    MA_LAG_FEATURE = params_features["ma_lag_feature"]
+def create_ma_lag_features(df, params_features):
+    MA_WIN = params_features["ma_win"]
+    MA_KEY = params_features["ma_key"]
+    LAG_RANGE = params_features["lag_range"]
 
-    for key in MA_LAG_FEATURE:
-        df = create_lag_ma(df, LAG, MA, key)
+    # create ma features
+    for key in MA_KEY:
+        df = create_ma_and_ma_diff(df, MA_WIN, key, lag=0)
+        df = create_ma_and_ma_diff(df, MA_WIN, key, lag=1)
+
+    # create lag features
+    for i in range(LAG_RANGE[0], LAG_RANGE[1] + 1):
+        df[f"sold_lag{i}"] = df.groupby(["id"])["sold"].shift(i)
+
+    return df
+
+
+def final_trimming(df, params_trimming):
+    """final trimming after ma and lag features created"""
+
+    START_DATE = params_trimming["start_date"]
 
     # trimming on start & end date (due to lag & ma)
     df = df[(df.date >= START_DATE)].copy()
 
     # trimming on sell price
     df = df[df.sell_price.notnull()].reset_index(drop=True)
+
     df = df.sort_values(["id", "date"]).reset_index(drop=True)
+    return df
+
+
+def final_create_other_features(df, params_features):
+    """create features other than ma and lag"""
+
+    AVG = params_features["avg"]
+
+    # avg(sold) over "id" across all dates within scope
+    for key in AVG:
+        df[f"avg_sold_per_" + "_".join(key)] = (
+            df[key + ["sold"]].groupby(key)["sold"].transform(np.mean)
+        )
+
+    # for sold_ma_diff.div(df['avg_sold_per_id'])
+    for col in [col for col in df.columns if re.search("ma\d_diff", col)]:
+        df[col] = df[col].div(df["avg_sold_per_id"])
 
     return df

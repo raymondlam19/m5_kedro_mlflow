@@ -1,5 +1,0 @@
-base:
-  # train_fraction: 0.8
-  # random_state: 3
-  target_col: "sold"
-  key_cols: ["id", "item_id", "dept_id", "cat_id", "store_id", "state_id", "date"]

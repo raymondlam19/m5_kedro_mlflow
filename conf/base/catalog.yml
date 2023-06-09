@@ -1,76 +1,43 @@
-# Here you can define all your data sets by using simple YAML syntax.
-#
-# Documentation for this file format can be found in "The Data Catalog"
-# Link: https://kedro.readthedocs.io/en/stable/data/data_catalog.html
-#
-# We support interacting with a variety of data stores including local file systems, cloud, network and HDFS
-#
-# An example data set definition can look as follows:
-#
-#bikes:
-#  type: pandas.CSVDataSet
-#  filepath: "data/01_raw/bikes.csv"
-#
-#weather:
-#  type: spark.SparkDataSet
-#  filepath: s3a://your_bucket/data/01_raw/weather*
-#  file_format: csv
-#  credentials: dev_s3
-#  load_args:
-#    header: True
-#    inferSchema: True
-#  save_args:
-#    sep: '|'
-#    header: True
-#
-#scooters:
-#  type: pandas.SQLTableDataSet
-#  credentials: scooters_credentials
-#  table_name: scooters
-#  load_args:
-#    index_col: ['name']
-#    columns: ['name', 'gear']
-#  save_args:
-#    if_exists: 'replace'
-#    # if_exists: 'fail'
-#    # if_exists: 'append'
-#
 # The Data Catalog supports being able to reference the same file using two different DataSet implementations
 # (transcoding), templating and a way to reuse arguments that are frequently repeated. See more here:
 # https://kedro.readthedocs.io/en/stable/data/data_catalog.html
-#
-# This is a data set used by the "Hello World" example pipeline provided with the project
-# template. Please feel free to remove it once you remove the example pipeline.
 
-# intermediate_df:
-#   type: pandas.CSVDataSet
-#   filepath: data/02_intermediate/intermediate_df.csv
-
-preprocessed_df:
+PREPROCESSED_DF:
   type: pickle.PickleDataSet
   filepath: data/03_primary/preprocessed_df.pkl
 
-lgbm_train_set:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_train_set.pkl
+# uncomment the following 2 datasets when there are any changes in preprocess pipeline
+# DATASET_ALL:
+#   type: pickle.PickleDataSet
+#   filepath: data/05_model_input/dataset_all.pkl
 
-lgbm_valid_set:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_valid_set.pkl
+# DF_LEFT:
+#   type: pandas.CSVDataSet
+#   filepath: data/07_model_output/df_left.csv
 
-lgbm_test_set:
-  type: pickle.PickleDataSet
-  filepath: data/05_model_input/lgbm_test_set.pkl
-
-label_encoding_mapping_dict:
+LABEL_ENCODING_MAPPING_DICT:
   type: pickle.PickleDataSet
   filepath: data/03_primary/label_encoding_mapping_dict.pkl
 
-lgbm_trained_model:
-  type: pickle.PickleDataSet
-  filepath: data/06_models/lgbm_trained_model.pkl
-  backend: pickle
+LGBM_TRAINED_MODEL:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: kedro_mlflow.io.models.MlflowModelSaverDataSet
+    flavor: mlflow.lightgbm
+    filepath: data/06_models/lgbm_trained_model
 
-df_out:
-  type: pickle.PickleDataSet
-  filepath: data/07_model_output/df_out.pkl
+PLOT_FEATURE_IMPORTANCE_GAIN:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: matplotlib.MatplotlibWriter
+    filepath: data/08_reporting/plot_feature_importance_gain.png
+
+PLOT_FEATURE_IMPORTANCE_SPLIT:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+  data_set:
+    type: matplotlib.MatplotlibWriter
+    filepath: data/08_reporting/plot_feature_importance_split.png
+
+DF_Y_PRED:
+  type: pandas.CSVDataSet
+  filepath: data/07_model_output/df_y_pred.csv

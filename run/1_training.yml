@@ -1,0 +1,4 @@
+# pass the following cli using a yml (equalivant to kedro run --env lgbm --pipeline lgbm_training --params ...)
+run:
+  env: lgbm                        # read parameters.yml in conf/preprocess
+  pipeline: lgbm_training          # run which pipeline in pipeline_registry

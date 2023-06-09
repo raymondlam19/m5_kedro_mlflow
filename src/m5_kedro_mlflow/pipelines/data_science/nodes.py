@@ -10,24 +10,25 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgbm
 
-from m5_kedro_mlflow.pipelines.data_science.metrics import wmape
+from m5_kedro_mlflow.pipelines.data_science.metrics import smape
+from m5_kedro_mlflow.pipelines.data_science.dataset import Dataset
+from m5_kedro_mlflow.pipelines.logger import Logger
 
 
-def ingest_data(df, params_base, params_features, params_train_valid_test_split):
+def ingest_data(df, params_target, params_features, params_train_valid_test_split):
+    """Transform df into lgbm dataset and define train valid test split."""
+
     # numerical and catergorical columns
-    TARGET_COL = params_base["target_col"]
+    TARGET = params_target
     NUM_COLS = []
     CAT_COLS = []
-    for i, k in params_features["num_cols"].items():
-        if "num_col_" in i:
-            NUM_COLS += k
+    for k, l in params_features["num_cols"].items():
+        if "num_col_" in k:
+            NUM_COLS += l
 
-    if params_features["num_cols"]["ma_lag"]:
-        NUM_COLS += [col for col in df.columns if TARGET_COL + "_" in col]
-
-    for i, k in params_features["cat_cols"].items():
-        if "cat_col_" in i:
-            CAT_COLS += k
+    for k, l in params_features["cat_cols"].items():
+        if "cat_col_" in k:
+            CAT_COLS += l
 
     # Label encoding for lgbm
     labels = {}
@@ -49,108 +50,64 @@ def ingest_data(df, params_base, params_features, params_train_valid_test_split)
     ] = "VALID"
     df.loc[df.d >= int(TEST_D.split("-")[0]), "train_valid_test"] = "TEST"
 
-    X_train = df.loc[
-        df.train_valid_test == "TRAIN",
-        [col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-    ]
-    X_valid = df.loc[
-        df.train_valid_test == "VALID",
-        [col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-    ]
-    X_test = df.loc[
-        df.train_valid_test == "TEST", [col + "_encoded" for col in CAT_COLS] + NUM_COLS
+    dataset_all = Dataset(df, CAT_COLS, NUM_COLS, TARGET)
+
+    df_left = dataset_all.df[
+        [col for col in dataset_all.df.columns if "_encoded" not in col]
     ]
 
-    y_train = df.loc[df.train_valid_test == "TRAIN", TARGET_COL]
-    y_valid = df.loc[df.train_valid_test == "VALID", TARGET_COL]
-    y_test = df.loc[df.train_valid_test == "TEST", TARGET_COL]
-
-    # log
-    print(
-        "Train: ",
-        X_train.shape,
-        y_train.shape,
-        "\nValid: ",
-        X_valid.shape,
-        y_valid.shape,
-        "\nTest: ",
-        X_test.shape,
-        y_test.shape,
-    )
-
-    train_set = lgbm.Dataset(
-        X_train,
-        y_train,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "TRAIN"},
-    )
-
-    valid_set = lgbm.Dataset(
-        X_valid,
-        y_valid,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "VALID"},
-    )
-
-    test_set = lgbm.Dataset(
-        X_test,
-        y_test,
-        feature_name=[col + "_encoded" for col in CAT_COLS] + NUM_COLS,
-        categorical_feature=[col + "_encoded" for col in CAT_COLS],
-        params={"train_valid_test": "TEST"},
-    )
-
-    return train_set, valid_set, test_set, labels
+    return dataset_all, df_left, labels
 
 
-def lgbm_training_plot_feature_importance(train_set, valid_set, params_lgbm):
+def lgbm_training(dataset_all, params_lgbm):
     LGBM_PARAMS = params_lgbm["lgbm_params"]
     LGBM_TRAINER_ARGS = params_lgbm["lgbm_trainer_args"]
 
     lgbm_model = lgbm.train(
         LGBM_PARAMS,
         **LGBM_TRAINER_ARGS,
-        train_set=train_set,
-        valid_sets=valid_set,
+        train_set=dataset_all.create_lgbm_dataset("TRAIN"),
+        valid_sets=dataset_all.create_lgbm_dataset("VALID"),
     )
-
-    # log
-    lgbm.plot_importance(lgbm_model, importance_type="gain")
-    lgbm.plot_importance(lgbm_model, importance_type="split")
 
     return lgbm_model
 
 
-def prediction(lgbm_model, label_encoding_mapping_dict, *datasets):
-
-    df_out = pd.DataFrame()
-    for dataset in datasets:
-        df = dataset.data.copy()
-
-        # label decoding
-        for i, k in label_encoding_mapping_dict.items():
-            df[i] = df[i + "_encoded"].replace(k)
-
-        df = df[[col for col in df.columns if "_encoded" not in col]].copy()
-
-        # add train_valid_test col
-        for i, k in dataset.params.items():
-            df[i] = k
-
-        df["y"] = dataset.label
-        df["y_pred"] = lgbm_model.predict(dataset.data).clip(min=0)
-        df_out = pd.concat([df_out, df], axis=0)
-
-    return df_out
-
-
-def evaluation(df_out):
+def plot_lgbm_feature_importance(lgbm_model):
     # log
-    print(
-        f"Train wmape: {wmape(df_out.loc[df_out.train_valid_test=='TRAIN', 'y_pred'], df_out.loc[df_out.train_valid_test=='TRAIN', 'y'])*100:.2f}%"
+    ax_gain = lgbm.plot_importance(lgbm_model, importance_type="gain")
+    ax_gain.figure.tight_layout()
+    ax_split = lgbm.plot_importance(lgbm_model, importance_type="split")
+    ax_split.figure.tight_layout()
+
+    return ax_gain.figure, ax_split.figure
+
+
+def prediction(lgbm_model, params_prediction, dataset_all):
+    ROUND_DECIMAL = params_prediction["round_decimal"]
+
+    y_pred = lgbm_model.predict(dataset_all.create_lgbm_dataset("ALL").data)
+    y_pred = np.clip(y_pred, a_min=0, a_max=None)
+    if type(ROUND_DECIMAL) == int:
+        y_pred = np.round(y_pred, ROUND_DECIMAL)
+
+    df_y_pred = pd.DataFrame(columns=["y", "y_pred"])
+    df_y_pred["y"] = dataset_all.create_lgbm_dataset("ALL").label
+    df_y_pred["y_pred"] = y_pred
+    return df_y_pred
+
+
+def evaluation(df_left, df_y_pred):
+    df_out = pd.concat([df_left, df_y_pred], axis=1)
+
+    # log
+    train_smape = smape(
+        df_out.loc[df_out.train_valid_test == "TRAIN", "y_pred"],
+        df_out.loc[df_out.train_valid_test == "TRAIN", "y"],
     )
-    print(
-        f"Valid wmape: {wmape(df_out.loc[df_out.train_valid_test=='VALID', 'y_pred'], df_out.loc[df_out.train_valid_test=='VALID', 'y'])*100:.2f}%"
+    valid_smape = smape(
+        df_out.loc[df_out.train_valid_test == "VALID", "y_pred"],
+        df_out.loc[df_out.train_valid_test == "VALID", "y"],
     )
+    Logger.log_metric("train_smape", train_smape)
+    Logger.log_metric("valid_smape", valid_smape)

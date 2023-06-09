@@ -1,6 +1,7 @@
 {
     "terminal.integrated.env.windows": {
         "PYTHONPATH": "${workspaceFolder}/src",
+        "HOME_PATH": "D:/jupyter-notebook/Kaggle/m5-forecasting-accuracy/m5-kedro-mlflow",
     },
     "python.formatting.provider": "black"
 }
