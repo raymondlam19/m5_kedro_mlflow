@@ -6,7 +6,6 @@ generated using Kedro 0.18.3
 import logging
 from typing import Any, Dict, Tuple
 
-import re
 import numpy as np
 import pandas as pd
 import lightgbm as lgbm
@@ -17,17 +16,19 @@ from m5_kedro_mlflow.pipelines.logger import Logger
 
 
 def ingest_data(df, params_target, params_features, params_train_valid_test_split):
+    """Transform df into lgbm dataset and define train valid test split."""
+
     # numerical and catergorical columns
     TARGET = params_target
     NUM_COLS = []
     CAT_COLS = []
-    for i, k in params_features["num_cols"].items():
-        if "num_col_" in i:
-            NUM_COLS += k
+    for k, l in params_features["num_cols"].items():
+        if "num_col_" in k:
+            NUM_COLS += l
 
-    for i, k in params_features["cat_cols"].items():
-        if "cat_col_" in i:
-            CAT_COLS += k
+    for k, l in params_features["cat_cols"].items():
+        if "cat_col_" in k:
+            CAT_COLS += l
 
     # Label encoding for lgbm
     labels = {}

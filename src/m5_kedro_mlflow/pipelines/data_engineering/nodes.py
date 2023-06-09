@@ -15,13 +15,6 @@ from m5_kedro_mlflow.pipelines.data_engineering.utils import create_ma_and_ma_di
 
 
 def read_data(params_dataset):
-    """Read 3 raw data csv -> trim and preprocess -> merge 3 df into 1
-        params_dataset, params_trimming, params_features
-    Args:
-        parameters: Parameters defined in parameters.yml.
-    Returns:
-        df: trimed & merged dataframe
-    """
     DIR = params_dataset["dir"]
     DF_SALES_FILENAME = params_dataset["df_sales"]
     DF_CALENDAR_FILENAME = params_dataset["df_calendar"]
@@ -38,6 +31,8 @@ def read_data(params_dataset):
 def trim_and_preprocess_data(
     df_sales, df_calendar, df_prices, params_trimming, params_features
 ):
+    """Read 3 df -> first trim and preprocess -> merge 3 df into 1"""
+
     TEST_SIZE = params_trimming["test_size"]
     MA_WIN = params_features["ma_win"]
     LAG_RANGE = params_features["lag_range"]
@@ -142,6 +137,8 @@ def create_ma_lag_features(df, params_features):
 
 
 def final_trimming(df, params_trimming):
+    """final trimming after ma and lag features created"""
+
     START_DATE = params_trimming["start_date"]
 
     # trimming on start & end date (due to lag & ma)
@@ -155,6 +152,8 @@ def final_trimming(df, params_trimming):
 
 
 def final_create_other_features(df, params_features):
+    """create features other than ma and lag"""
+
     AVG = params_features["avg"]
 
     # avg(sold) over "id" across all dates within scope

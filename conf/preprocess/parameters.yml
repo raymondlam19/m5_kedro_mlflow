@@ -14,7 +14,8 @@ features:
     ['id'],     # id lv
     []          # global lv
   ]
-  lag_range: [1, 1]
+  lag_range: [1, 1]   # create lag features in this range
   avg: [
     ['id'],
+    # u may create more global avg features in a list here
   ]

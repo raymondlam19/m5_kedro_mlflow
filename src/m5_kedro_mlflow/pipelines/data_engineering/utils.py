@@ -1,8 +1,6 @@
 import pandas as pd
 
 
-# utils
-# utils
 def create_ma_and_ma_diff(df, MA: list, key: list, lag: int) -> pd.DataFrame:
     key_name = ("_".join(key) if len(key) > 0 else "global") + "_"
 
