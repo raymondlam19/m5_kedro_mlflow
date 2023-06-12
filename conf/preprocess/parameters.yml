@@ -6,7 +6,7 @@ dataset:
 
 trimming:
   test_size: 28
-  start_date: "2016"
+  start_date: "2016"  # start date of training data after trimming
 
 features:
   ma_win: [7, 28]
