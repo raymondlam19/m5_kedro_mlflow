@@ -3,5 +3,6 @@
         "PYTHONPATH": "${workspaceFolder}/src",
         "HOME_PATH": "D:/jupyter-notebook/Kaggle/m5-forecasting-accuracy/m5-kedro-mlflow",
     },
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.terminal.activateEnvironment": true,
 }
