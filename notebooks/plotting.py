@@ -10,11 +10,14 @@ import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import matplotlib.pyplot as plt
 
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 
 class Plot:
     def plot_multi_ts(df: pd.DataFrame):
         """Plot multi time series in the same graph
-        df: a pd.DataFrame containing multi time series with size (n,L) where n = number of time series"""
+        df: a pd.DataFrame containing multi time series with size (n,L) where n = number of time series
+        """
 
         df1 = df.T.reset_index(drop=True)
 
@@ -26,8 +29,8 @@ class Plot:
         """
         Plot time series, its ACF and PACF, calculate Dickey–Fuller test
 
-        y - a pd.DataFrame of a single time series with size (?,1)
-        lags - how many lags to include in ACF, PACF calculation
+        y   : a pd.DataFrame of a single time series with size (?,1)
+        lags: how many lags to include in ACF, PACF calculation
         """
 
         fig = plt.figure(figsize=figsize)
@@ -48,12 +51,10 @@ class Plot:
 
     def plot_forecast(train: pd.DataFrame, valid: pd.DataFrame, pred: pd.DataFrame):
         """Plot the forecasting and return the valid mae and maoe
-        train: pd.DataFrame with size (?,1)
-        valid: pd.DataFrame with size (?,1)
-        test: pd.DataFrame with size (?,1)
+        train   : pd.DataFrame with size (?,1)
+        valid   : pd.DataFrame with size (?,1)
+        test    : pd.DataFrame with size (?,1)
         """
-        from sklearn.metrics import mean_absolute_error
-        from sklearn.metrics import mean_absolute_percentage_error
 
         valid_mae = mean_absolute_error(valid, pred)
         valid_mape = mean_absolute_percentage_error(valid, pred)
@@ -71,11 +72,20 @@ class Plot:
 
 
 class ModelEvaluation:
-    def _extract_feature_importance(self, model):
+    def _extract_feature_importance(self, trained_model):
+        """
+        **Internal function**
+        Extract feature importance (gain & split) from a trained model
+
+        trained_model: trained_model
+        """
         print("extracting feature importance (gain/split)....")
 
         sorted_feature_gain = sorted(
-            zip(model.feature_importance(importance_type="gain"), model.feature_name()),
+            zip(
+                trained_model.feature_importance(importance_type="gain"),
+                trained_model.feature_name(),
+            ),
             reverse=True,
         )
         feature_imp_gain = pd.DataFrame(
@@ -84,7 +94,8 @@ class ModelEvaluation:
 
         sorted_feature_split = sorted(
             zip(
-                model.feature_importance(importance_type="split"), model.feature_name()
+                trained_model.feature_importance(importance_type="split"),
+                trained_model.feature_name(),
             ),
             reverse=True,
         )
@@ -95,7 +106,13 @@ class ModelEvaluation:
         return feature_imp_gain, feature_imp_split
 
     @classmethod
-    def plot_lgbm_feature_importance(cls, trained_model, i=1):
+    def plot_lgbm_feature_importance(cls, trained_model, i=None):
+        """
+        Plot the feature importance (gain & split) of the trained model
+
+        trained_model   : trained_model
+        i               : an int means step for multi-model, default is None
+        """
 
         feature_imp_gain, feature_imp_split = cls()._extract_feature_importance(
             trained_model
