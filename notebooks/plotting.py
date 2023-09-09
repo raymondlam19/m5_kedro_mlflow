@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 
+
 class Plot:
     def plot_multi_ts(df: pd.DataFrame):
         """Plot multi time series in the same graph
@@ -72,7 +73,7 @@ class Plot:
 
 
 class ModelEvaluation:
-    def _extract_feature_importance(self, trained_model):
+    def extract_feature_importance(self, trained_model):
         """
         **Internal function**
         Extract feature importance (gain & split) from a trained model
@@ -114,7 +115,7 @@ class ModelEvaluation:
         i               : an int means step for multi-model, default is None
         """
 
-        feature_imp_gain, feature_imp_split = cls()._extract_feature_importance(
+        feature_imp_gain, feature_imp_split = cls().extract_feature_importance(
             trained_model
         )
 

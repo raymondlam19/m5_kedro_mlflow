@@ -1,0 +1,13 @@
+common:
+  windowsize: 12
+  horizon: 28
+
+lgbm:
+  lgbm_params:
+    objective: "l1"
+    metric: "rmse"
+    learning_rate: 0.01
+  lgbm_trainer_args:
+    num_boost_round: 1000
+    early_stopping_rounds: 100
+    verbose_eval: 10
