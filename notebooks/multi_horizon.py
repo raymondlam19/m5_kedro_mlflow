@@ -3,7 +3,7 @@ import pandas as pd
 
 import lightgbm as lgbm
 
-from plotting import ModelEvaluation
+from plotting import Plot, ModelEvaluation
 from time_series import TsHandler
 from preprocess import Preprocessor, Dataset
 
@@ -34,8 +34,8 @@ class Prediction:
         return np.array(valid_y_pred)
 
     def multi_model_approach(
-        df_s: pd.DataFrame,
-        col: str,
+        df_item_id: pd.DataFrame,
+        names: list,
         windowsize: int,
         horizon: int,
         lgbm_params: dict,
@@ -51,8 +51,8 @@ class Prediction:
         - ...
         - Prediction(t+n) = model_n(obs(t), obs(t-1), …, obs(t-w))
 
-        df_s                : a pd.DataFrame of a single time series with size (?,1)
-        col                 : a str of the column name of df_s
+        df_item_id          : a pd.DataFrame containing all item_id lvl time series
+        names               : a list of item_id name (str), len(names)=1 -> single ts
         windowsize          : window size of training data
         horizon             : number of forecasting timestep
         lgbm_params         : a dict containing lgbm params like num_bin, learning_rate
@@ -60,35 +60,47 @@ class Prediction:
         show_plot           : Boolean to show feature importance of each trained model
         """
 
-        train = df_s.iloc[:-horizon]
-        input = train.iloc[-windowsize:].T
+        # Return a df_y for validation
+        df_y = df_item_id.iloc[df_item_id.index.isin(names), -horizon:].T.reset_index(drop=True)
+
         list_lgbm_model = []
         y_pred_concat = []
 
         for i in np.arange(1, horizon + 1):
             print(f"---------------------Step{i}---------------------")
-            df = TsHandler.tabularise_single_ts(
-                df_s[f"{col}"].values, window_size=windowsize, step=i
-            )
-            df = Preprocessor.set_train_valid_test(df, horizon=horizon)
+            df_m = TsHandler.create_training_data(df_item_id, names, windowsize, horizon, step=i)
 
+            # Create lgbm dataset for lgbm training
             num_cols = [f"x{i+1}" for i in range(windowsize)]
+            cat_cols = []
+            features = num_cols + cat_cols
             target_col = f"y{i}"
             dataset_all = Dataset(
-                df, cat_cols=[], num_cols=num_cols, target_col=target_col
+                df_m, cat_cols=cat_cols, num_cols=num_cols, target_col=target_col
             )
 
+            # lgbm training
             lgbm_model = lgbm.train(
                 lgbm_params,
                 **lgbm_trainer_args,
                 train_set=dataset_all.create_lgbm_dataset("TRAIN"),
                 valid_sets=dataset_all.create_lgbm_dataset("VALID"),
             )
+
+            # Save model
             list_lgbm_model.append(lgbm_model)
+
+            # Plot feature importance
             if show_plot:
                 ModelEvaluation.plot_lgbm_feature_importance(lgbm_model, i)
 
-            y_pred_single_ts = lgbm_model.predict(input)
-            y_pred_concat.append(y_pred_single_ts)
+            # Single time step prediction
+            # Select last row of features in TRAIN for each item_id
+            idx = len(df_item_id.columns) - windowsize - horizon
+            input = df_m.loc[df_m.index == idx, features]
+            y_pred = lgbm_model.predict(input)
+            y_pred_concat.append(y_pred)
 
-        return np.array(y_pred_concat), list_lgbm_model
+        df_y_pred = pd.DataFrame(np.array(y_pred_concat), columns=names)
+
+        return df_y, df_y_pred, list_lgbm_model

@@ -1,14 +1,15 @@
 import re
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+import scipy.stats as stats
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
@@ -54,7 +55,7 @@ class Plot:
         """Plot the forecasting and return the valid mae and maoe
         train   : pd.DataFrame with size (?,1)
         valid   : pd.DataFrame with size (?,1)
-        test    : pd.DataFrame with size (?,1)
+        pred    : pd.DataFrame with size (?,1) where pred's shape[0] = valid's shape[0]
         """
 
         valid_mae = mean_absolute_error(valid, pred)
@@ -70,6 +71,67 @@ class Plot:
         plt.show()
 
         return valid_mae, valid_mape
+
+    def plot_histograms(df_item_id: pd.DataFrame):
+        """
+        Given a df_item_id, plot all the histograms for each item_id in a graph
+        """
+        unpivot = pd.melt(
+            df_item_id.reset_index(),
+            id_vars=["item_id"],
+            value_vars=df_item_id.columns,
+            var_name="ts",
+            value_name="Sales",
+        )
+
+        # Plot the histogram
+        fig = px.histogram(unpivot, x="Sales", color="item_id")
+
+        # Set labels and title
+        fig.update_layout(
+            xaxis_title="Sales",
+            yaxis_title="Frequency",
+            title="Histogram of each item_id",
+            width=1000,
+            height=500,
+        )
+
+        # Show the plot
+        fig.show()
+
+    def plot_qqplots(df_item_id: pd.DataFrame, names: list):
+        """
+        For all selected names in df_item_id, plot all the qq plots for rach item_id in in a graph
+        """
+        fig = go.Figure()
+        for i, name in enumerate(names):
+            ts = df_item_id.T[name].values
+            (osm, osr), (slope, intercept, _) = stats.probplot(
+                ts, dist="norm", fit=True
+            )
+            fig.add_trace(go.Scatter(x=osm, y=osr, mode="markers", name=name))
+            fig.add_trace(go.Scatter(x=osm, y=slope * osm + intercept, mode="lines"))
+
+        fig.update_layout(
+            title="Q-Q Plot",
+            xaxis_title="Theoretical Quantiles",
+            yaxis_title="Ordered Values",
+            width=800,
+            height=700,
+        )
+        fig.show()
+
+    def return_plot_style(i=0):
+        """
+        return a plot style for matplotlib
+        """
+        plot_style = {
+            "marker": ".",
+            "markerfacecolor": f"C{i}",
+            "markeredgecolor": f"C{i}",
+            "linestyle": "none",
+        }
+        return plot_style
 
 
 class ModelEvaluation:

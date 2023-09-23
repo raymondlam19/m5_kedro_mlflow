@@ -10,4 +10,4 @@ lgbm:
   lgbm_trainer_args:
     num_boost_round: 1000
     early_stopping_rounds: 100
-    verbose_eval: 10
+    verbose_eval: 100
