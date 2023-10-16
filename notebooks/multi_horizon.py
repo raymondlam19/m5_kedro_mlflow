@@ -61,14 +61,20 @@ class Prediction:
         """
 
         # Return a df_y for validation
-        df_y = df_item_id.iloc[df_item_id.index.isin(names), -horizon:].T.reset_index(drop=True)
+        df_y = (
+            df_item_id[df_item_id.index.isin(names)]
+            .T.iloc[-horizon:][names]
+            .reset_index(drop=True)
+        )
 
         list_lgbm_model = []
         y_pred_concat = []
 
         for i in np.arange(1, horizon + 1):
             print(f"---------------------Step{i}---------------------")
-            df_m = TsHandler.create_training_data(df_item_id, names, windowsize, horizon, step=i)
+            df_m = TsHandler.create_training_data(
+                df_item_id, names, windowsize, horizon, step=i
+            )
 
             # Create lgbm dataset for lgbm training
             num_cols = [f"x{i+1}" for i in range(windowsize)]

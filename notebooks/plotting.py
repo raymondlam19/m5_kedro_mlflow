@@ -11,8 +11,7 @@ import scipy.stats as stats
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
+from metric import Metric
 
 
 class Plot:
@@ -57,12 +56,11 @@ class Plot:
         valid   : pd.DataFrame with size (?,1)
         pred    : pd.DataFrame with size (?,1) where pred's shape[0] = valid's shape[0]
         """
-
-        valid_mae = mean_absolute_error(valid, pred)
-        valid_mape = mean_absolute_percentage_error(valid, pred)
+        valid_mae = Metric.mae_display_str(valid, pred)
+        valid_smape = Metric.smape_display_str(valid, pred)
 
         plt.figure(figsize=(10, 5))
-        plt.title(f"valid_mae: {valid_mae:.2f}, valid_mape: {valid_mape:.3f}")
+        plt.title(f"valid_mae: {valid_mae}, valid_smape: {valid_smape}")
         plt.plot(train, label="train")
         plt.plot(valid, label="valid")
         pred.index = valid.index
@@ -70,7 +68,7 @@ class Plot:
         plt.legend()
         plt.show()
 
-        return valid_mae, valid_mape
+        return valid_mae, valid_smape
 
     def plot_histograms(df_item_id: pd.DataFrame):
         """
