@@ -5,7 +5,7 @@ from sklearn.preprocessing import RobustScaler
 
 
 class Preprocessor:
-    def set_train_valid_test(df, horizon):
+    def set_train_valid_test(df, horizon: int):
         """
         Set train valid test for the table after a single time series df_s was tabularised
 
@@ -17,6 +17,38 @@ class Preprocessor:
         df["train_valid_test"].iloc[-horizon:] = "VALID"
 
         return df
+
+    def label_encoding(df, cat_cols: list):
+        """
+        Label encoding for lgbm
+
+        return:
+        df      : a df with new encoded col with suffix "_encoded"
+        label   : a dict {encoded value: int: cat col name: string}
+        """
+        mappings = {}
+        for col in cat_cols:
+            df[col + "_encoded"] = df[col].astype("category")
+            if col == "weekday":  # Assuming 'day' is the column containing the weekdays
+                mapping = {
+                    "Monday": 1,
+                    "Tuesday": 2,
+                    "Wednesday": 3,
+                    "Thursday": 4,
+                    "Friday": 5,
+                    "Saturday": 6,
+                    "Sunday": 7
+                }
+                df[col + "_encoded"] = df[col + "_encoded"].map(mapping)
+            else:
+                mapping = dict(
+                    zip(df[col + "_encoded"].cat.codes, df[col + "_encoded"])
+                )
+                df[col + "_encoded"] = df[col + "_encoded"].cat.codes
+
+            mappings[col] = mapping
+
+        return df, mappings
 
 
 class Dataset:

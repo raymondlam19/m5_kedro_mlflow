@@ -1,9 +1,54 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error as mae
+
+from time_series import TsHandler
+from plotting import Plot
+
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
+class Evaluation:
+    def single_item_evaluate(df_item_id, name, horizon, df_y_pred):
+        """
+        Single item evaluation and plot the forecast.
+        And return the valid mae & valid smape for the item.
+
+        df_item_id  : a pd.DataFrame containing all item_id lvl time series
+        name        : the name of the item_id
+        horizon     : number of forecasting timestep
+        df_y_pred   : a df of y_pred of validation period. shape: (28, len(names))
+        """
+        df_s = TsHandler.create_single_time_series(df_item_id, name=name)
+        train = df_s.iloc[:-horizon]
+        valid = df_s.iloc[-horizon:]
+        y_pred = df_y_pred[[name]]
+        print(
+            f"\n----------------------------------------------- {name} -----------------------------------------------"
+        )
+        valid_mae_lgbm, valid_smape_lgbm = Plot.plot_forecast(
+            train.iloc[-horizon * 4 :], valid, y_pred
+        )
+
+        return valid_mae_lgbm, valid_smape_lgbm
+
+    def overall_evaluate(df_y, df_y_pred):
+        """
+        Print Overall mae & smape
+
+        df_y        : a df of y for validation. shape: (28, len(names))
+        df_y_pred   : a df of y_pred of validation period. shape: (28, len(names))
+        """
+        assert set(df_y.columns) == set(
+            df_y_pred.columns
+        ), "df_y_pred.columns doesn't match df_y.columns"
+        names = df_y.columns
+        print(f"Overall mae: {Metric.mae_display_str(df_y[names], df_y_pred[names])}")
+        print(
+            f"Overall smape: {Metric.smape_display_str(df_y[names], df_y_pred[names])}"
+        )
 
 
 class Metric:

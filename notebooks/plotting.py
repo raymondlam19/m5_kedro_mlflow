@@ -11,8 +11,6 @@ import scipy.stats as stats
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from metric import Metric
-
 
 class Plot:
     def plot_multi_ts(df: pd.DataFrame):
@@ -56,6 +54,8 @@ class Plot:
         valid   : pd.DataFrame with size (?,1)
         pred    : pd.DataFrame with size (?,1) where pred's shape[0] = valid's shape[0]
         """
+        from evaluation import Metric
+
         valid_mae = Metric.mae_display_str(valid, pred)
         valid_smape = Metric.smape_display_str(valid, pred)
 
