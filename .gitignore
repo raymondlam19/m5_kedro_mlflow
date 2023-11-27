@@ -9,6 +9,7 @@ notebooks/data/**
 notebooks/saved/data/**
 notebooks/ref/**
 notebooks/dashboard/**
+notebooks/lightning_logs/**
 
 # ignore all local configuration
 conf/local/**
