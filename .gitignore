@@ -6,10 +6,11 @@ mlruns/**
 
 # ignore datasets, references, dashboards in notebooks directory
 notebooks/data/**
-notebooks/saved/data/**
+notebooks/saved/**
 notebooks/ref/**
 notebooks/dashboard/**
 notebooks/lightning_logs/**
+notebooks/.lr**.ckpt
 
 # ignore all local configuration
 conf/local/**
