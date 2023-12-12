@@ -1,5 +1,5 @@
 common:
-  windowsize: 12
+  windowsize: 84
   horizon: 28
 
 lgbm:
