@@ -4,6 +4,10 @@
 # ignore mlruns directory
 mlruns/**
 
+# ignore lightning_logs
+lightning_logs/**
+.lr**.ckpt
+
 # ignore datasets, references, dashboards in notebooks directory
 notebooks/data/**
 notebooks/saved/**
